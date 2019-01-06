@@ -61,6 +61,8 @@ if __name__ == "__main__":
     
     if args.n_trains != 'full':
         n_trains = int(args.n_trains)
+    else:
+        n_trains = args.n_trains
 
     # train!
     main(dataroot=args.dataset_path, outroot=args.result_path,

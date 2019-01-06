@@ -121,7 +121,7 @@ def report_progress(n, reports, is_test):
 
 def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
           model='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=100,
-          n_epoch=100, record_every=10, is_gpu=True, out_root='./', name=None):
+          n_epoch=300, record_every=20, is_gpu=True, out_root='./', name=None):
     """Main training function
 
     Args:

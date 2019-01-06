@@ -11,7 +11,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from .utils import to_tensor
 
 
-MAX_TRAIN_RATIO = 0.9
+MAX_TRAIN_RATIO = 0.8
 RANDOM_SEED = 1234
 
 
