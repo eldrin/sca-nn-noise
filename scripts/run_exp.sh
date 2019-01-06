@@ -14,7 +14,8 @@ do
                 "$dataroot/results/" \
                 $model \
                 $size \
-                $noise
+                $noise \
+                --fold=$fold
         done
     done
 done
