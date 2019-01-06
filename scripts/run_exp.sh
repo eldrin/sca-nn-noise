@@ -1,5 +1,5 @@
-model="shivam"
-dataroot="./data"
+model="$1"
+dataroot="$2"
 nfolds=10
 
 for noise in 0. 0.25 0.5 0.75 1
