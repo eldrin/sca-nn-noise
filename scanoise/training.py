@@ -81,9 +81,9 @@ def save_test_prob(n, model, test_dataloader, out_path, name):
     out_fn = join(out_path, name + '_{:03d}.csv.tar.gz'.format(n))
     model.eval()  # just to make sure
     prob = []
-    for batch in test_dataloader:
+    for X, y in test_dataloader:
         if next(model.parameters()).is_cuda:
-            X = batch[0].cuda()
+            X = X.cuda()
         o = model(X[:, None])
         p = F.softmax(o, dim=1)
         prob.append(to_numpy(p))
