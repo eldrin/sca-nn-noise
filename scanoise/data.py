@@ -53,12 +53,12 @@ def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
     # after split the test, use that 90%.
     n_train_total = X.shape[0] - n_tests
     max_train = int(n_train_total * MAX_TRAIN_RATIO)
-    n_tests = n_train_total - max_train 
+    n_valids = n_train_total - max_train 
     if (n_trains == 'full') or (n_trains >= max_train):
         n_trains = max_train
 
     ((Xtr, Ytr), (Xvl, Yvl)) = get_splits(
-        X[:-n_tests], Y[:-n_tests], n_trains, n_tests
+        X[:-n_tests], Y[:-n_tests], n_trains, n_valids
     )
 
     # to tensor
