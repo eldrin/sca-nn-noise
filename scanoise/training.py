@@ -120,8 +120,8 @@ def report_progress(n, reports, is_test):
 
 
 def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
-          model='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=100,
-          n_epoch=300, record_every=20, is_gpu=True, out_root='./', name=None):
+          model='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=200,
+          n_epochs=300, record_every=20, is_gpu=True, out_root='./', name=None):
     """Main training function
 
     Args:
@@ -136,7 +136,7 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
         lr (float): learning rate
         l2 (float): weight decay coefficient
         batch_size (int): batch size
-        n_epoch (int): number of epochs
+        n_epochs (int): number of epochs
         record_every (int): frequency of evaluation (unit: epoch)
         is_gpu (bool): indicates trainer using GPU
     """
@@ -187,7 +187,7 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
         'model': None,
         'vacc': None
     }
-    for n in range(n_epoch + 1):
+    for n in range(n_epochs + 1):
         is_test = (n % record_every == 0)
 
         # evaluate

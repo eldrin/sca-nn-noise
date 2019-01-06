@@ -23,7 +23,7 @@ def get_filenames(data_root, model_id):
     }
 
 def main(dataroot='./data/datasets/', outroot='./data/results/',
-         model_id='dpav4', n_trains='full', noise=0.5):
+         model_id='dpav4', n_trains='full', noise=0.5, n_epochs=100):
     """"""
 
     subroot = (
@@ -39,6 +39,7 @@ def main(dataroot='./data/datasets/', outroot='./data/results/',
         model    = model_id,
         n_trains = n_trains,
         noise    = noise,
+        n_epochs = n_epochs,
         out_root = join(outroot, replace_dots(subroot))
     )
 
@@ -57,6 +58,10 @@ if __name__ == "__main__":
 
     parser.add_argument("noise", type=float, default=0.5,
                         help="amount of the noise to add in the input signal during training")
+
+    parser.add_argument("--n-epochs", type=str, default=300,
+                        help="number of epochs")
+
     args = parser.parse_args()
     
     if args.n_trains != 'full':
@@ -66,4 +71,5 @@ if __name__ == "__main__":
 
     # train!
     main(dataroot=args.dataset_path, outroot=args.result_path,
-         model_id=args.model_id, n_trains=n_trains, noise=args.noise)
+         model_id=args.model_id, n_trains=n_trains, noise=args.noise,
+         n_epochs=args.n_epochs)
