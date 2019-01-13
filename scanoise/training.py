@@ -90,7 +90,7 @@ def save_test_prob(n, model, test_dataloader, out_path, name):
     prob = np.concatenate(prob, axis=0)
     pd.DataFrame(prob).to_csv(
         out_fn, header=None, index=None,
-        float_format='%.5f', compression='gzip'
+        float_format='%.6f', compression='gzip'
     )
 
 
@@ -120,7 +120,7 @@ def report_progress(n, reports, is_test):
 
 
 def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
-          model='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=200,
+          model_id='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=200,
           n_epochs=300, record_every=20, is_gpu=True, out_root='./', name=None):
     """Main training function
 
@@ -131,7 +131,7 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
                                if 'full', it uses 90% of training set as
                                training traces
         n_tests (int): number of traces used for the testing
-        model (str): model id for the desired model type (defined in model.py)
+        model_id (str): model id for the desired model type (defined in model.py)
         noise (float): desired amount of noise addtion on the input
         lr (float): learning rate
         l2 (float): weight decay coefficient
@@ -143,9 +143,9 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
     # prepare filename / path
     if name is None:
         if n_trains != 'full':
-            name = '{}_n{:d}_noise{:.01f}'.format(model, n_trains, noise)
+            name = '{}_n{:d}_noise{:.01f}'.format(model_id, n_trains, noise)
         else:
-            name = '{}_nfull_noise{:.01f}'.format(model, noise)
+            name = '{}_nfull_noise{:.01f}'.format(model_id, noise)
     name = replace_dots(name)
 
     # make path if not existing
@@ -153,20 +153,29 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
     path.mkdir(parents=True, exist_ok=True)
 
     # load datasets
+    datasets = {
+        split: (
+            get_data_loader(dataset, batch_size=batch_size, shuffle=True)
+            if split != 'test' else
+            get_data_loader(dataset, batch_size=batch_size,
+                            shuffle=False, drop_last=False)
+        )
+        for split, dataset
+        in prepare_data(trace_fn, label_fn, n_trains, n_tests).items()
+    }
     [train, valid, test] = [
-        get_data_loader(dataset, batch_size=batch_size)
-        for dataset
-        in prepare_data(trace_fn, label_fn, n_trains, n_tests)
+        datasets['train'], datasets['valid'], datasets['test']
     ]
 
     # init model
-    if model == 'Benadjila':
+    if model_id == 'Benadjila':
         # signal stat is explicitly computed before the training
-        mean = train.tensors[0].mean()
-        std = train.tensors[0].std()
-        model = MODEL_MAP[model](1, N_CLASSES, noise, mean, std)
+        n_len = train.dataset.tensors[0].shape[-1]
+        mean = train.dataset.tensors[0].mean()
+        std = train.dataset.tensors[0].std()
+        model = MODEL_MAP[model_id](1, N_CLASSES, n_len, noise, mean, std)
     else:
-        model = MODEL_MAP[model](1, N_CLASSES, noise)
+        model = MODEL_MAP[model_id](1, N_CLASSES, noise)
 
     if is_gpu:
         model.cuda()
@@ -179,7 +188,7 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
 
     # setup loss
     loss = nn.CrossEntropyLoss()
-    
+
     # start training
     report = []
     best = {
@@ -211,12 +220,21 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
         report.append(
             run(n, 'train', model, train, loss, opt)
         )
-    
+
         report_progress(n, report, is_test)
-    
+
     # save best model's prob
     save_test_prob(best['epoch'], best['model'],
                    test, out_root, name + '_best')
+
+    # save best model
+    model.eval()
+    torch.save(
+        {
+            'model_id': model_id,
+            'state_dict': model.state_dict()},
+        join(out_root, name + '_model.pth')
+    )
 
     # save output report
     pd.DataFrame(report).to_csv(join(out_root, name + '_report.csv'))

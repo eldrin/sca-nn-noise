@@ -23,9 +23,9 @@ def load_dataset(*tensors):
     return TensorDataset(*tensors)
 
 
-def get_data_loader(dataset, batch_size=64, shuffle=True, n_jobs=0):
+def get_data_loader(dataset, batch_size=64, shuffle=True, drop_last=True, n_jobs=0):
     return DataLoader(
-        dataset, batch_size=batch_size, drop_last=True, 
+        dataset, batch_size=batch_size, drop_last=drop_last,
         shuffle=shuffle, num_workers=n_jobs
     )
 
@@ -37,7 +37,7 @@ def get_splits(X, Y, n_trains, n_valids, random_state=RANDOM_SEED):
     for train_ix, valid_ix in sss.split(X, Y):
         Xtr, Xvl = X[train_ix], X[valid_ix]
         Ytr, Yvl = Y[train_ix], Y[valid_ix]
-    
+
     return ((Xtr, Ytr), (Xvl, Yvl))
 
 
@@ -53,7 +53,7 @@ def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
     # after split the test, use that 90%.
     n_train_total = X.shape[0] - n_tests
     max_train = int(n_train_total * MAX_TRAIN_RATIO)
-    n_valids = n_train_total - max_train 
+    n_valids = n_train_total - max_train
     if (n_trains == 'full') or (n_trains >= max_train):
         n_trains = max_train
 
@@ -65,7 +65,9 @@ def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
     Xtr, Xvl = to_tensor(Xtr), to_tensor(Xvl)
     Ytr, Yvl = to_tensor(Ytr), to_tensor(Yvl)
 
-    return (
-        load_dataset(Xtr, Ytr), load_dataset(Xvl, Yvl), load_dataset(Xts, Yts)
-    )
+    return {
+        'train': load_dataset(Xtr, Ytr),
+        'valid': load_dataset(Xvl, Yvl),
+        'test': load_dataset(Xts, Yts)
+    }
 

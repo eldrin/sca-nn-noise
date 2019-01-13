@@ -38,7 +38,7 @@ def main(dataroot='./data/datasets/', outroot='./data/results/',
     train(
         trace_fn = get_filenames(dataroot, model_id)['trace'],
         label_fn = get_filenames(dataroot, model_id)['value'],
-        model    = model_id,
+        model_id = model_id,
         n_trains = n_trains,
         noise    = noise,
         n_epochs = n_epochs,
@@ -68,7 +68,7 @@ if __name__ == "__main__":
                         help="fold number (optional)")
 
     args = parser.parse_args()
-    
+
     if args.n_trains != 'full':
         n_trains = int(args.n_trains)
     else:
