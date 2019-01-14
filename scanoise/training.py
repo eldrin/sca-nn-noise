@@ -63,7 +63,7 @@ def run(epoch, type, model, dataloader, loss_function,  optimizer=None):
 
         error += to_numpy(l)
         metric += accuracy_score(
-            to_numpy(y_pred).argmax(axis=1), to_numpy(y_true)
+            to_numpy(y_true), to_numpy(y_pred).argmax(axis=1)
         )
     error /= (j + 1)
     metric /= (j + 1)
@@ -119,8 +119,30 @@ def report_progress(n, reports, is_test):
         )
 
 
+def instantiate_model(model_id, noise, is_gpu, train_data=None, state_dict=None):
+    # init model
+    if model_id == 'Benadjila':
+        # signal stat is explicitly computed before the training
+        n_len = train_data.tensors[0].shape[-1]
+        mean = train_data.tensors[0].mean()
+        std = train_data.tensors[0].std()
+        model = MODEL_MAP[model_id](1, N_CLASSES, n_len, noise, mean, std)
+    else:
+        model = MODEL_MAP[model_id](1, N_CLASSES, noise)
+
+    if state_dict:
+        model.eval()
+        model.load_state_dict(state_dict)
+
+    if is_gpu:
+        model.cuda()
+
+    return model
+
+
+
 def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
-          model_id='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=200,
+          model_id='dpav4', noise=0.5, lr=0.0001, l2=1e-7, batch_size=256,
           n_epochs=300, record_every=20, is_gpu=True, out_root='./', name=None):
     """Main training function
 
@@ -155,30 +177,24 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
     # load datasets
     datasets = {
         split: (
-            get_data_loader(dataset, batch_size=batch_size, shuffle=True)
-            if split != 'test' else
-            get_data_loader(dataset, batch_size=batch_size,
-                            shuffle=False, drop_last=False)
+            (
+                get_data_loader(dataset['data'], batch_size=batch_size,
+                                shuffle=True, drop_last=True)
+                if split != 'test' else
+                get_data_loader(dataset['data'], batch_size=batch_size,
+                                shuffle=False, drop_last=False)
+            ),
+            dataset['idx']
         )
         for split, dataset
         in prepare_data(trace_fn, label_fn, n_trains, n_tests).items()
     }
     [train, valid, test] = [
-        datasets['train'], datasets['valid'], datasets['test']
+        datasets['train'][0], datasets['valid'][0], datasets['test'][0]
     ]
 
-    # init model
-    if model_id == 'Benadjila':
-        # signal stat is explicitly computed before the training
-        n_len = train.dataset.tensors[0].shape[-1]
-        mean = train.dataset.tensors[0].mean()
-        std = train.dataset.tensors[0].std()
-        model = MODEL_MAP[model_id](1, N_CLASSES, n_len, noise, mean, std)
-    else:
-        model = MODEL_MAP[model_id](1, N_CLASSES, noise)
-
-    if is_gpu:
-        model.cuda()
+    # get model
+    model = instantiate_model(model_id, noise, is_gpu, train.dataset)
 
     # setup optimizer
     opt = optim.Adam(
@@ -204,7 +220,8 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
             run(n, 'eval', model, valid, loss)
         )
         if (not best['vacc']) or (report[-1]['accuracy'] > best['vacc']):
-            best['model'] = copy.deepcopy(model.cpu())
+            model.cpu()
+            best['model'] = copy.deepcopy(model.state_dict())
             best['epoch'] = n
             best['vacc'] = report[-1]['accuracy']
             if is_gpu:
@@ -224,7 +241,10 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
         report_progress(n, report, is_test)
 
     # save best model's prob
-    save_test_prob(best['epoch'], best['model'],
+    best_model = instantiate_model(
+        model_id, noise, is_gpu, train.dataset, best['model']
+    )
+    save_test_prob(best['epoch'], best_model,
                    test, out_root, name + '_best')
 
     # save best model
@@ -232,7 +252,11 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
     torch.save(
         {
             'model_id': model_id,
-            'state_dict': model.state_dict()},
+            'split': {'train': datasets['train'][1],
+                      'valid': datasets['valid'][1],
+                      'test': datasets['test'][1]},
+            'state_dict': best['model']
+        },
         join(out_root, name + '_model.pth')
     )
 

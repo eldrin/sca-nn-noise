@@ -38,7 +38,7 @@ def get_splits(X, Y, n_trains, n_valids, random_state=RANDOM_SEED):
         Xtr, Xvl = X[train_ix], X[valid_ix]
         Ytr, Yvl = Y[train_ix], Y[valid_ix]
 
-    return ((Xtr, Ytr), (Xvl, Yvl))
+    return ((Xtr, Ytr), (Xvl, Yvl)), train_ix, valid_ix
 
 
 def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
@@ -57,7 +57,7 @@ def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
     if (n_trains == 'full') or (n_trains >= max_train):
         n_trains = max_train
 
-    ((Xtr, Ytr), (Xvl, Yvl)) = get_splits(
+    ((Xtr, Ytr), (Xvl, Yvl)), train_ix, valid_ix = get_splits(
         X[:-n_tests], Y[:-n_tests], n_trains, n_valids
     )
 
@@ -66,8 +66,8 @@ def prepare_data(trace_fn, label_fn, n_trains='full', n_tests=25000):
     Ytr, Yvl = to_tensor(Ytr), to_tensor(Yvl)
 
     return {
-        'train': load_dataset(Xtr, Ytr),
-        'valid': load_dataset(Xvl, Yvl),
-        'test': load_dataset(Xts, Yts)
+        'train': {'data': load_dataset(Xtr, Ytr), 'idx': train_ix},
+        'valid': {'data': load_dataset(Xvl, Yvl), 'idx': valid_ix},
+        'test': {'data': load_dataset(Xts, Yts),
+                 'idx': np.arange(X.shape[0] - n_tests, X.shape[0])}
     }
-
