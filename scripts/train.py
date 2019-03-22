@@ -12,7 +12,11 @@ MODEL_DATA_MAP = {
     'shivam': 'Shivam',
     'random': 'Random',
     'ascad': 'ASCAD',
-    'Benadjila': 'ASCAD'
+    'Benadjila': 'ASCAD',
+    'Benadjila_dpav4': 'DPAv4',
+    'Benadjila_shivam': 'Shivam',
+    'Benadjila_random': 'Random',
+
 }
 
 def get_filenames(data_root, model_id):

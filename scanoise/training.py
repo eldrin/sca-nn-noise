@@ -121,12 +121,12 @@ def report_progress(n, reports, is_test):
 
 def instantiate_model(model_id, noise, is_gpu, train_data=None, state_dict=None):
     # init model
-    if model_id == 'Benadjila':
+    if 'Benadjila' in model_id:
         # signal stat is explicitly computed before the training
         n_len = train_data.tensors[0].shape[-1]
         mean = train_data.tensors[0].mean()
         std = train_data.tensors[0].std()
-        model = MODEL_MAP[model_id](1, N_CLASSES, n_len, noise, mean, std)
+        model = MODEL_MAP['Benadjila'](1, N_CLASSES, n_len, noise, mean, std)
     else:
         model = MODEL_MAP[model_id](1, N_CLASSES, noise)
 
@@ -249,16 +249,16 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
 
     # save best model
     model.eval()
-    torch.save(
-        {
-            'model_id': model_id,
-            'split': {'train': datasets['train'][1],
-                      'valid': datasets['valid'][1],
-                      'test': datasets['test'][1]},
-            'state_dict': best['model']
-        },
-        join(out_root, name + '_model.pth')
-    )
+    # torch.save(
+    #     {
+    #         'model_id': model_id,
+    #         'split': {'train': datasets['train'][1],
+    #                   'valid': datasets['valid'][1],
+    #                   'test': datasets['test'][1]},
+    #         'state_dict': best['model']
+    #     },
+    #     join(out_root, name + '_model.pth')
+    # )
 
     # save output report
     pd.DataFrame(report).to_csv(join(out_root, name + '_report.csv'))

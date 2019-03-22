@@ -264,7 +264,7 @@ class CNN1DASCAD(nn.Module):
         """"""
         if self.training:
             e = self.std * torch.randn(X.shape)
-            e = e + self.mean.expand(X.size())
+            # e = e + self.mean.expand(X.size())
             X = X + e.cuda() * self.gaus_noise
 
         x = self._conv_block(X)
