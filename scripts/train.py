@@ -27,7 +27,8 @@ def get_filenames(data_root, model_id):
     }
 
 def main(dataroot='./data/datasets/', outroot='./data/results/',
-         model_id='dpav4', n_trains='full', noise=0.5, fold=None, n_epochs=100):
+         model_id='dpav4', n_trains='full', noise=0.5, fold=None,
+         n_epochs=100, batch_sz=256):
     """"""
 
     subroot = (
@@ -40,13 +41,14 @@ def main(dataroot='./data/datasets/', outroot='./data/results/',
         subroot = join(subroot, '{:02d}/'.format(fold))
 
     train(
-        trace_fn = get_filenames(dataroot, model_id)['trace'],
-        label_fn = get_filenames(dataroot, model_id)['value'],
-        model_id = model_id,
-        n_trains = n_trains,
-        noise    = noise,
-        n_epochs = n_epochs,
-        out_root = join(outroot, replace_dots(subroot))
+        trace_fn   = get_filenames(dataroot, model_id)['trace'],
+        label_fn   = get_filenames(dataroot, model_id)['value'],
+        model_id   = model_id,
+        n_trains   = n_trains,
+        noise      = noise,
+        n_epochs   = n_epochs,
+        batch_size = batch_sz,
+        out_root   = join(outroot, replace_dots(subroot)),
     )
 
 
@@ -65,7 +67,10 @@ if __name__ == "__main__":
     parser.add_argument("noise", type=float, default=0.5,
                         help="amount of the noise to add in the input signal during training")
 
-    parser.add_argument("--n-epochs", type=str, default=300,
+    parser.add_argument("--n-epochs", type=int, default=300,
+                        help="number of epochs")
+
+    parser.add_argument("--batch-sz", type=int, default=256,
                         help="number of epochs")
 
     parser.add_argument("--fold", type=int, default=0,
@@ -81,4 +86,4 @@ if __name__ == "__main__":
     # train!
     main(dataroot=args.dataset_path, outroot=args.result_path,
          model_id=args.model_id, n_trains=n_trains, noise=args.noise,
-         n_epochs=args.n_epochs, fold=args.fold)
+         n_epochs=args.n_epochs, fold=args.fold, batch_sz=args.batch_sz)

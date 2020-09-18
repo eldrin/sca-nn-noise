@@ -181,7 +181,7 @@ def train(trace_fn, label_fn, n_trains='full', n_tests=25000,
                 get_data_loader(dataset['data'], batch_size=batch_size,
                                 shuffle=True, drop_last=True)
                 if split != 'test' else
-                get_data_loader(dataset['data'], batch_size=batch_size,
+                get_data_loader(dataset['data'], batch_size=int(batch_size / 2),
                                 shuffle=False, drop_last=False)
             ),
             dataset['idx']
